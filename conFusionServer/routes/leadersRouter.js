@@ -1,39 +1,62 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 
-const leadersRouter = express.Router();
+const Leaders = require('../models/leaders');
 
-leadersRouter.use(bodyParser.json())
+const leaderRouter = express.Router();
 
-leadersRouter.route('/')
+leaderRouter.use(bodyParser.json())
+
+leaderRouter.route('/')
  
-.all((req,res,next) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type','text/html');
-    
-    next();
-})
-
 .get((req,res,next) => {
-    res.end('will send all leaders to you')
+    Leaders.find({})
+    .then((leaders) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type','application/json');
+        res.json(leaders);
+    }, (err) => next(err))
+    .catch((err) => next(err))
 })
    
 .post((req,res,next) => {
-    res.end('Will add the leader : ' + req.body.name + ' with details : ' + req.body.description);
+    Leaders.create(req.body)
+    .then((leader) => {
+        console.log('New leader added : ' + leader)
+        res.statusCode = 200;
+        res.setHeader('Content-Type','application/json');
+        res.json(leader);
+    }, (err) => next(err))
+    .catch((err) => next(err))
 })
    
 .put((req,res,next) => {
-    res.end('Put operation not supported on leaders ');
+    res.end('Put operation not supported on Leaders ');
 })
    
 .delete((req,res,next) => {
-    res.end('Deleting all promotions...')
+    Leaders.remove({})
+    .then((resp) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type','application/json');
+        res.json(resp);
+    }, (err) => next(err))
+    .catch((err) => next(err))
+    
 });
    
 
-leadersRouter.route('/:leaderId')
+leaderRouter.route('/:leaderId')
 .get((req,res,next) => {
-    res.end('will send leader of dish : ' + req.params.leaderId + ' to you.');
+    Leaders.findById(req.params.leaderId)
+    .then((leader) => {
+        console.log(leader);
+        res.statusCode = 200;
+        res.setHeader('Content-Type','application/json');
+        res.json(leader)
+    }, (err) => next(err))
+    .catch((err) => next(err))
 })
    
 .post((req,res,next) => {
@@ -41,14 +64,31 @@ leadersRouter.route('/:leaderId')
 })
    
 .put((req,res,next) => {
-    res.write('Updating promotions ');
-    res.end('Will update leader : ' + req.body.name + ' with details : ' + req.body.description)
+    Leaders.findByIdAndUpdate(req.params.leaderId,{
+        $set : req.body
+    },{
+        new : true
+    })
+    .then((leader) => {
+        console.log('Updated Leaders ' + req.params.leaderId);
+        res.statusCode = 200;
+        res.setHeader('Content-Type','application/json');
+        res.json(leader);
+    }, (err) => next(err))
+    .catch(err => next(err));
 })
    
 .delete((req,res,next) => {
-    res.end('Deleting leaders ' + req.params.leaderId);
+    Leaders.findByIdAndRemove(req.params.leaderId)
+    .then((resp) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(resp)
+    },(err) => next(err))
+    .catch((err) => next(err));
 })
 
 
 
-module.exports = leadersRouter;
+
+module.exports = leaderRouter;
